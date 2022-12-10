@@ -6,8 +6,8 @@ export const useCounterStore = defineStore("counter", {
   state() {
     return {
       // all these properties will have their type inferred automatically
-      baseUrl: `https://medicalia-production.up.railway.app`,
-      // baseUrl: "http://localhost:3000",
+      // baseUrl: `https://medicalia-production.up.railway.app`,
+      baseUrl: "http://localhost:3000",
       newsList: [],
       covidData: [],
       loading: false,
