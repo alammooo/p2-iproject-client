@@ -1,13 +1,20 @@
 <script>
+import { mapActions, mapWritableState } from "pinia"
+import { useCounterStore } from "../stores/counter"
+
 export default {
   methods: {
     navNews() {
       this.$router.push("/news")
+      this.loadPict = true
     },
     navCovidTable() {
       this.$router.push("/covid-table")
     },
   },
+  computed:{
+    ...mapWritableState(useCounterStore, ["loadPict"])
+  }
 }
 </script>
 
@@ -44,7 +51,8 @@ export default {
         Delivering newest health news around the Globe
       </h1>
       <p class="mb-8 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48">
-        Here at Medicalinia we focus on health where technology, innovation, and daily lifestyle
+        Here at Medicalinia we focus on health where technology, innovation, and daily
+        lifestyle
       </p>
       <div
         class="flex flex-col mb-8 lg:mb-16 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">

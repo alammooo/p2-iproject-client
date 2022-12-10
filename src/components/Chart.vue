@@ -1,14 +1,3 @@
-<template>
-  <div class="w-3/4 h-1/2 mx-auto">
-    <Bar
-      v-if="loaded"
-      id="my-chart-id"
-      :options="chartOptions"
-      :data="chartData"
-      class="mt-24" />
-  </div>
-</template>
-
 <script>
 import { Bar } from "vue-chartjs"
 import {
@@ -22,6 +11,9 @@ import {
   ArcElement,
 } from "chart.js"
 import axios from "axios"
+import { mapActions, mapWritableState } from "pinia"
+import { useCounterStore } from "../stores/counter"
+import PictureLoader from "./PictureLoader.vue"
 
 ChartJS.register(
   Title,
@@ -35,11 +27,10 @@ ChartJS.register(
 
 export default {
   name: "BarChart",
-  components: { Bar },
+  components: { Bar, PictureLoader },
   data() {
     return {
       loaded: false,
-      baseUrl: `http://localhost:3000`,
       covidData: [],
       diedCase: [],
       chartData: {
@@ -58,8 +49,11 @@ export default {
     }
   },
   methods: {
+    ...mapActions(useCounterStore, ["openToast"]),
+
     async fetchCovidData() {
       try {
+        this.loadPict = true
         const { data } = await axios({
           method: "GET",
           url: `${this.baseUrl}/covid-data`,
@@ -70,10 +64,9 @@ export default {
 
         const colorList = ["#6D67E4", "#46C2CB"]
         this.chartData.datasets[0].backgroundColor = data.list_data.map((el) => {
-          const randomNumber = Math.floor(Math.random() * (colorList.length))
+          const randomNumber = Math.floor(Math.random() * colorList.length)
           return colorList[randomNumber]
         })
-        console.log(this.chartData.datasets[0].backgroundColor)
         this.chartData.labels = data.list_data.map((el) => {
           return el.key
         })
@@ -81,15 +74,33 @@ export default {
           return el.jumlah_kasus
         })
         // console.log(this.covidData)
-        console.log(this.diedCase)
         this.loaded = true
       } catch (error) {
-        console.log(error)
+        this.openToast(error.response.data.message)
+      } finally {
+        this.loadPict = false
       }
     },
   },
   created() {
     this.fetchCovidData()
   },
+  computed: {
+    ...mapWritableState(useCounterStore, ["baseUrl", "loadPict"]),
+  },
 }
 </script>
+
+<template>
+  <div class="w-3/4 h-1/2 mx-auto" v-if="!loadPict">
+    <Bar
+      v-if="loaded"
+      id="my-chart-id"
+      :options="chartOptions"
+      :data="chartData"
+      class="mt-24" />
+  </div>
+  <div class="flex flex-col items-center my-5" v-else>
+    <PictureLoader />
+  </div>
+</template>

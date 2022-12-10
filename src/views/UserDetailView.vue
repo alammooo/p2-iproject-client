@@ -7,18 +7,13 @@ export default {
   data() {
     return {
       avatar: "",
-      baseUrl: "http://localhost:3000",
-      // fullName: "",
-      // gender: "",
-      // telephone: "",
-      // address: "",
       userDetail: [],
     }
   },
   methods: {
     ...mapActions(useCounterStore, ["openToast"]),
     uploadFile(event) {
-      console.log(event.target.files[0])
+      
       this.avatar = event.target.files[0]
     },
     async handleSubmit() {
@@ -39,10 +34,8 @@ export default {
         this.openToast("Your profile Updated!")
         this.fetchDetail()
       } catch (error) {
-        console.log(error)
-      } finally {
-        this.fetchDetail()
-      }
+        this.openToast(error.data.response.message)
+      } 
     },
 
     async fetchDetail() {
@@ -55,7 +48,7 @@ export default {
           },
         })
         this.userDetail = data
-        console.log(this.userDetail)
+        
       } catch (error) {
         this.isSpinner = false
       }
@@ -66,7 +59,7 @@ export default {
   },
 
   computed: {
-    ...mapWritableState(useCounterStore, ["loading"]),
+    ...mapWritableState(useCounterStore, ["loading", "baseUrl"]),
   },
 }
 </script>

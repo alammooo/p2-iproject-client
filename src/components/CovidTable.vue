@@ -25,7 +25,7 @@ export default {
 <template>
   <section class="my-36 container mx-auto bg-white">
     <div class="overflow-x-auto relative shadow-md sm:rounded-lg">
-      <h1 class="text-center text-xl mt-5">Chart Covid-19 in Indonesia</h1>
+      <h1 class="text-center font-medium text-3xl mt-5">Covid-19 Data in Indonesia</h1>
       <ChartVue />
       <div class="flex flex-col gap-10">
         <table class="w-full text-left text-gray-500">

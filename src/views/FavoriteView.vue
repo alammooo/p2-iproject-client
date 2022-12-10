@@ -24,11 +24,14 @@ export default {
     <section class="mb-32 text-gray-800">
       <h2 class="text-3xl font-bold mb-12 text-center">Your Favorite</h2>
 
-      <div class="grid lg:grid-cols-3 gap-6">
+      <div class="grid lg:grid-cols-3 gap-6" v-if="favoriteList.length > 0">
         <FavoriteCard
           v-for="favorite in favoriteList"
           :key="favorite.id"
           :favorite="favorite" />
+      </div>
+      <div class="text-center" v-else>
+        <h1 class="text-xl font-medium">Favorite list is empty</h1>
       </div>
     </section>
     <!-- Section: Design Block -->

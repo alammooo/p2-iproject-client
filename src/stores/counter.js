@@ -6,7 +6,8 @@ export const useCounterStore = defineStore("counter", {
   state() {
     return {
       // all these properties will have their type inferred automatically
-      baseUrl: "http://localhost:3000",
+      baseUrl: `https://medicalia-production.up.railway.app`,
+      // baseUrl: "http://localhost:3000",
       newsList: [],
       covidData: [],
       loading: false,
@@ -18,6 +19,8 @@ export const useCounterStore = defineStore("counter", {
       userDetail: [],
       fileUpload: "",
       googleEmail: "",
+      profilePict: "",
+      activePage: "",
     }
   },
   actions: {
@@ -65,6 +68,7 @@ export const useCounterStore = defineStore("counter", {
         })
         this.newsList = data.articles
       } catch (error) {
+        this.openToast(error.response.data.message)
       } finally {
         this.loadPict = false
       }
@@ -78,23 +82,10 @@ export const useCounterStore = defineStore("counter", {
           url: `${this.baseUrl}/covid-data`,
         })
         this.covidData = data.list_data
-        // console.log(this.covidData)
       } catch (error) {
         this.openToast(error.response.data.message)
       } finally {
         this.loading = false
-      }
-    },
-
-    async fetchAppointment() {
-      try {
-        const { data } = await axios({
-          method: "GET",
-          url: `${this.baseUrl}/appointment`,
-        })
-        this.appointmentList = data.findAppointment
-      } catch (error) {
-        this.openToast(error.response.data.message)
       }
     },
 
@@ -113,12 +104,12 @@ export const useCounterStore = defineStore("counter", {
 
     async login({ email, password }) {
       try {
+        this.isSpinner = true
         const { data } = await axios({
           method: "POST",
           url: `${this.baseUrl}/login`,
           data: { email, password },
         })
-
         localStorage.setItem("access_token", data.access_token)
         this.loggedIn = true
         this.fetchUserDetail()
@@ -126,6 +117,8 @@ export const useCounterStore = defineStore("counter", {
         this.openToast("Succesfully logged in!")
       } catch (error) {
         this.openToast(error.response.data.message)
+      } finally {
+        this.isSpinner = false
       }
     },
 
@@ -138,6 +131,7 @@ export const useCounterStore = defineStore("counter", {
 
     async addFavorites({ title, description, urlToImage, url }) {
       try {
+        this.isSpinner = true
         const { data } = await axios({
           method: "POST",
           url: `${this.baseUrl}/favorites`,
@@ -146,12 +140,15 @@ export const useCounterStore = defineStore("counter", {
         })
         this.openToast("Successfully added to Favorite!")
       } catch (error) {
-        this.openToast(error.response.data.message)
+        this.openToast("You're not logged in")
+      } finally {
+        this.isSpinner = false
       }
     },
 
     async fetchFavorite() {
       try {
+        this.loadPict = true
         const { data } = await axios({
           method: "GET",
           url: `${this.baseUrl}/favorites`,
@@ -161,7 +158,9 @@ export const useCounterStore = defineStore("counter", {
         })
         this.favoriteList = data.FavoritesList
       } catch (error) {
-        this.openToast(error.response.data.message)
+        this.openToast("You're not logged in")
+      } finally {
+        this.loadPict = false
       }
     },
 
@@ -193,7 +192,7 @@ export const useCounterStore = defineStore("counter", {
           },
         })
         this.userDetail = data
-        console.log(this.userDetail)
+        this.profilePict = data.profilePict
       } catch (error) {
         this.openToast(error.response.data.message)
         this.isSpinner = false
