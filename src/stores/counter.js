@@ -1,28 +1,201 @@
-import { ref, computed } from "vue"
 import { defineStore } from "pinia"
 import axios from "axios"
+import Toastify from "toastify-js"
 
 export const useCounterStore = defineStore("counter", {
-  state: () => {
+  state() {
     return {
       // all these properties will have their type inferred automatically
-      count: 0,
-      name: "Eduardo",
-      isAdmin: true,
-      items: [],
-      hasChanged: true,
+      baseUrl: `https://medicalia-production.up.railway.app`,
+      // baseUrl: "http://localhost:3000",
+      newsList: [],
+      covidData: [],
+      loading: false,
+      loadPict: false,
+      appointmentList: [],
+      loggedIn: false,
+      favoriteList: [],
+      isSpinner: false,
+      userDetail: [],
+      fileUpload: "",
+      googleEmail: "",
+      profilePict: "",
+      activePage: "",
     }
   },
   actions: {
+    openToast(message) {
+      Toastify({
+        text: message,
+        duration: 3000,
+        newWindow: true,
+        close: true,
+        gravity: "bottom",
+        position: "right",
+        stopOnFocus: true,
+        style: {
+          background: "black",
+          color: "white",
+        },
+        onClick: function () {},
+      }).showToast()
+    },
+
+    async googleSignInOnLoad(response) {
+      try {
+        const { credential } = response
+        const googleToken = await axios({
+          method: "POST",
+          url: `${this.baseUrl}/google-login`,
+          headers: { "google-oauth-token": credential },
+        })
+        localStorage.setItem("access_token", googleToken.data.access_token)
+        this.googleEmail = googleToken.data.email
+        this.loggedIn = true
+        this.openToast(googleToken.data.message)
+        this.router.push("/")
+      } catch (error) {
+        this.openToast(error.response.data.message)
+      }
+    },
+
     async fetchNewsData() {
+      try {
+        this.loadPict = true
+        const { data } = await axios({
+          method: "GET",
+          url: "https://newsapi.org/v2/top-headlines?country=gb&category=health&apiKey=96596792c7d74fefb9765035495b3630",
+        })
+        this.newsList = data.articles
+      } catch (error) {
+        this.openToast(error.response.data.message)
+      } finally {
+        this.loadPict = false
+      }
+    },
+
+    async fetchCovidData() {
+      try {
+        this.loading = true
+        const { data } = await axios({
+          method: "GET",
+          url: `${this.baseUrl}/covid-data`,
+        })
+        this.covidData = data.list_data
+      } catch (error) {
+        this.openToast(error.response.data.message)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async register({ email, password }) {
+      try {
+        const { data } = await axios({
+          method: "POST",
+          url: `${this.baseUrl}/register`,
+          data: { email, password },
+        })
+        this.openToast("Successfully register!")
+      } catch (error) {
+        this.openToast(error)
+      }
+    },
+
+    async login({ email, password }) {
+      try {
+        this.isSpinner = true
+        const { data } = await axios({
+          method: "POST",
+          url: `${this.baseUrl}/login`,
+          data: { email, password },
+        })
+        localStorage.setItem("access_token", data.access_token)
+        this.loggedIn = true
+        this.fetchUserDetail()
+        this.router.replace("/")
+        this.openToast("Succesfully logged in!")
+      } catch (error) {
+        this.openToast(error.response.data.message)
+      } finally {
+        this.isSpinner = false
+      }
+    },
+
+    logout() {
+      localStorage.clear()
+      this.loggedIn = false
+      this.router.replace("/login")
+      this.openToast("Successfully logged out")
+    },
+
+    async addFavorites({ title, description, urlToImage, url }) {
+      try {
+        this.isSpinner = true
+        const { data } = await axios({
+          method: "POST",
+          url: `${this.baseUrl}/favorites`,
+          data: { title, description, urlToImage, url },
+          headers: { access_token: localStorage.getItem("access_token") },
+        })
+        this.openToast("Successfully added to Favorite!")
+      } catch (error) {
+        this.openToast("You're not logged in")
+      } finally {
+        this.isSpinner = false
+      }
+    },
+
+    async fetchFavorite() {
+      try {
+        this.loadPict = true
+        const { data } = await axios({
+          method: "GET",
+          url: `${this.baseUrl}/favorites`,
+          headers: {
+            access_token: localStorage.getItem("access_token"),
+          },
+        })
+        this.favoriteList = data.FavoritesList
+      } catch (error) {
+        this.openToast("You're not logged in")
+      } finally {
+        this.loadPict = false
+      }
+    },
+
+    async deleteFavorite(id) {
+      try {
+        await axios({
+          method: "DELETE",
+          url: `${this.baseUrl}/favorites/${id}`,
+          headers: {
+            access_token: localStorage.access_token,
+          },
+        })
+        this.openToast("Successfully delete Favorite")
+        this.fetchFavorite()
+        this.isSpinner = false
+      } catch (error) {
+        this.isSpinner = false
+        this.openToast(error.response.data.message)
+      }
+    },
+
+    async fetchUserDetail() {
       try {
         const { data } = await axios({
           method: "GET",
-          url: "https://newsapi.org/v2/top-headlines?country=id&category=health&apiKey=96596792c7d74fefb9765035495b3630",
+          url: `${this.baseUrl}/user-detail`,
+          headers: {
+            access_token: localStorage.access_token,
+          },
         })
-        console.log(data)
+        this.userDetail = data
+        this.profilePict = data.profilePict
       } catch (error) {
-        console.log(error)
+        this.openToast(error.response.data.message)
+        this.isSpinner = false
       }
     },
   },
